@@ -104,12 +104,12 @@ export default function BoxModal({ box, onUpdate, onDelete, onClose }: BoxModalP
                   id="title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black placeholder-gray-400"
                   placeholder="제목을 입력하세요"
                   maxLength={100}
                 />
               ) : (
-                <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg min-h-[48px]">
+                <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg min-h-[48px] text-black">
                   {title || '제목이 없습니다'}
                 </div>
               )}
@@ -124,13 +124,13 @@ export default function BoxModal({ box, onUpdate, onDelete, onClose }: BoxModalP
                   id="content"
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-black placeholder-gray-400"
                   placeholder="내용을 입력하세요 (최대 3000자)"
                   rows={12}
                   maxLength={3000}
                 />
               ) : (
-                <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg min-h-[300px] whitespace-pre-wrap">
+                <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg min-h-[300px] whitespace-pre-wrap text-black">
                   {content || '내용이 없습니다'}
                 </div>
               )}

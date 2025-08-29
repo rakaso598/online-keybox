@@ -64,7 +64,7 @@ export default function PasswordModal({ isNewBox, onSubmit, onClose }: PasswordM
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black placeholder-gray-400"
               placeholder="암호를 입력하세요"
               autoFocus
             />
@@ -80,7 +80,7 @@ export default function PasswordModal({ isNewBox, onSubmit, onClose }: PasswordM
                 id="confirmPassword"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black placeholder-gray-400"
                 placeholder="암호를 다시 입력하세요"
               />
             </div>
