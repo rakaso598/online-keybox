@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import BoxGrid from './components/BoxGrid';
 import BoxModal from './components/BoxModal';
 import PasswordModal from './components/PasswordModal';
+import { decryptContent, encryptContent } from './components/BoxModal';
 
 export interface BoxData {
   id: string;
@@ -117,20 +118,25 @@ export default function Home() {
   // 박스 데이터 업데이트
   const handleBoxUpdate = async (updatedBox: BoxData) => {
     try {
+      // 박스 비밀번호는 selectedBox에서 가져옴(이미 인증된 상태)
+      const password = prompt('박스 비밀번호를 입력하세요(암호화/복호화용)');
+      if (!password) return;
+      const encryptedContent = await encryptContent(password, updatedBox.content);
       const response = await fetch('/api/boxes', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           boxNumber: updatedBox.boxNumber,
           title: updatedBox.title,
-          content: updatedBox.content,
-          password: updatedBox.password,
+          content: encryptedContent,
+          password: '***', // 비밀번호 변경 아님 표시
           isUsed: updatedBox.isUsed
         })
       });
-
       if (response.ok) {
         const updated = await response.json();
+        // 복호화해서 보여주기
+        updated.content = await decryptContent(password, updated.content);
         setBoxes(boxes.map(b => b.boxNumber === updatedBox.boxNumber ? updated : b));
         setSelectedBox(updated);
       }
