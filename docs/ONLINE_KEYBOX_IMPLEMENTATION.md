@@ -2,7 +2,7 @@
 
 ## 1. 프로젝트 개요
 - **기술스택**: Next.js 15, TypeScript, TailwindCSS, Prisma, PostgreSQL(Neon), Vercel
-- **주요 목적**: 안전한 온라인 개인 문자열 보관함(키박스) 구현 및 서버리스 환경에서의 데이터베이스 연동 학습
+- **주요 목적**: 임시 온라인 개인 문자열 보관함(키박스) 구현 및 서버리스 환경에서의 데이터베이스 연동 학습
 
 ## 2. 데이터베이스 및 Prisma
 - **Prisma ORM**을 사용하여 PostgreSQL과 연동

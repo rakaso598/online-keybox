@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "온라인 키박스",
-  description: "안전한 개인 데이터 보관함",
+  description: "임시 개인 데이터 보관함",
 };
 
 export default function RootLayout({
