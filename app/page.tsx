@@ -23,6 +23,7 @@ export default function Home() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showBoxModal, setShowBoxModal] = useState(false);
   const [passwordBoxNumber, setPasswordBoxNumber] = useState<number | null>(null);
+  const [boxPassword, setBoxPassword] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   // 데이터베이스에서 박스 데이터 로드
@@ -74,7 +75,7 @@ export default function Home() {
           body: JSON.stringify({
             boxNumber: passwordBoxNumber,
             title: box.title,
-            content: box.content,
+            content: '', // 내용 없음
             password,
             isUsed: true
           })
@@ -84,6 +85,7 @@ export default function Home() {
           const updatedBox = await response.json();
           setBoxes(boxes.map(b => b.boxNumber === passwordBoxNumber ? updatedBox : b));
           setSelectedBox(updatedBox);
+          setBoxPassword(password); // 비밀번호 상태 저장
         }
       } catch (error) {
         console.error('Failed to update box:', error);
@@ -100,6 +102,7 @@ export default function Home() {
         });
         if (response.ok) {
           setSelectedBox(box);
+          setBoxPassword(password); // 비밀번호 상태 저장
         } else {
           alert('암호가 틀렸습니다.');
           return;
@@ -118,10 +121,11 @@ export default function Home() {
   // 박스 데이터 업데이트
   const handleBoxUpdate = async (updatedBox: BoxData) => {
     try {
-      // 박스 비밀번호는 selectedBox에서 가져옴(이미 인증된 상태)
-      const password = prompt('박스 비밀번호를 입력하세요(암호화/복호화용)');
-      if (!password) return;
-      const encryptedContent = await encryptContent(password, updatedBox.content);
+      if (!boxPassword) {
+        alert('비밀번호 정보가 없습니다. 박스를 다시 열어주세요.');
+        return;
+      }
+      const encryptedContent = await encryptContent(boxPassword, updatedBox.content);
       const response = await fetch('/api/boxes', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -135,8 +139,7 @@ export default function Home() {
       });
       if (response.ok) {
         const updated = await response.json();
-        // 복호화해서 보여주기
-        updated.content = await decryptContent(password, updated.content);
+        updated.content = await decryptContent(boxPassword, updated.content);
         setBoxes(boxes.map(b => b.boxNumber === updatedBox.boxNumber ? updated : b));
         setSelectedBox(updated);
       }
@@ -163,6 +166,13 @@ export default function Home() {
       console.error('Failed to delete box:', error);
       alert('박스 삭제에 실패했습니다.');
     }
+  };
+
+  // 박스 모달 닫을 때 비밀번호 상태 초기화
+  const handleCloseBoxModal = () => {
+    setShowBoxModal(false);
+    setSelectedBox(null);
+    setBoxPassword(null);
   };
 
   if (loading) {
@@ -213,10 +223,7 @@ export default function Home() {
             box={selectedBox}
             onUpdate={handleBoxUpdate}
             onDelete={handleBoxDelete}
-            onClose={() => {
-              setShowBoxModal(false);
-              setSelectedBox(null);
-            }}
+            onClose={handleCloseBoxModal}
           />
         )}
       </div>
