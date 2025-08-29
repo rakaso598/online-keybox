@@ -68,16 +68,15 @@ export default function BoxModal({ box, onUpdate, onDelete, onClose }: BoxModalP
   };
 
   // 클라이언트 전용 암호화/복호화 유틸
-  async function deriveKey(password: string, salt: Uint8Array) {
+  async function deriveKey(password: string, salt: ArrayBuffer) {
     const enc = new TextEncoder();
     const keyMaterial = await window.crypto.subtle.importKey(
       'raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveKey']
     );
-    // salt를 명시적으로 Uint8Array로 캐스팅
     return window.crypto.subtle.deriveKey(
       {
         name: 'PBKDF2',
-        salt: salt as Uint8Array,
+        salt,
         iterations: 100000,
         hash: 'SHA-256',
       },
@@ -93,9 +92,9 @@ export default function BoxModal({ box, onUpdate, onDelete, onClose }: BoxModalP
     window.crypto.getRandomValues(salt);
     const iv = new Uint8Array(12);
     window.crypto.getRandomValues(iv);
-    const key = await deriveKey(password, salt);
+    const key = await deriveKey(password, salt.buffer);
     const ciphertext = await window.crypto.subtle.encrypt(
-      { name: 'AES-GCM', iv: iv as Uint8Array },
+      { name: 'AES-GCM', iv: iv.buffer },
       key,
       enc.encode(plain)
     );
@@ -107,9 +106,9 @@ export default function BoxModal({ box, onUpdate, onDelete, onClose }: BoxModalP
     const salt = Uint8Array.from(atob(saltB64), c => c.charCodeAt(0));
     const iv = Uint8Array.from(atob(ivB64), c => c.charCodeAt(0));
     const ct = Uint8Array.from(atob(ctB64), c => c.charCodeAt(0));
-    const key = await deriveKey(password, salt as Uint8Array);
+    const key = await deriveKey(password, salt.buffer);
     const plain = await window.crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv: iv as Uint8Array },
+      { name: 'AES-GCM', iv: iv.buffer },
       key,
       ct
     );
