@@ -1,4 +1,4 @@
-# 온라인 키스토어 (Online Keybox) - ✨[바로가기](https://online-keybox.vercel.app)
+# 온라인 키박스 (Online Keybox) - ✨[바로가기](https://online-keybox.vercel.app)
 
 > ⚠️ **이 프로젝트는 학습/실습/데모용 예제입니다. 실제 비밀번호, 개인키, 민감정보를 저장하지 마세요.**
 > - 데이터는 평문으로 데이터베이스에 저장되며, 별도의 암호화/해싱/인증/인가가 적용되어 있지 않습니다.
