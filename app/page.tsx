@@ -90,11 +90,21 @@ export default function Home() {
         return;
       }
     } else {
-      // 기존 박스 - 암호 확인
-      if (box.password === password) {
-        setSelectedBox(box);
-      } else {
-        alert('암호가 틀렸습니다.');
+      // 기존 박스 - 암호 확인 (서버에 검증 요청)
+      try {
+        const response = await fetch('/api/boxes/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ boxNumber: passwordBoxNumber, password })
+        });
+        if (response.ok) {
+          setSelectedBox(box);
+        } else {
+          alert('암호가 틀렸습니다.');
+          return;
+        }
+      } catch (error) {
+        alert('암호 확인에 실패했습니다.');
         return;
       }
     }

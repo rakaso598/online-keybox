@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../../lib/prisma';
+import bcrypt from 'bcryptjs';
 
 // 모든 박스 조회
 export async function GET() {
@@ -40,17 +41,32 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { boxNumber, title, content, password, isUsed } = body;
 
+    // 기존 박스 정보 조회
+    const existingBox = await prisma.box.findUnique({ where: { boxNumber } });
+    if (!existingBox) {
+      return NextResponse.json({ error: 'Box not found' }, { status: 404 });
+    }
+
+    let passwordToSave = existingBox.password;
+    // 비밀번호가 새로 들어온 경우에만 해싱
+    if (password && (!existingBox.isUsed || (isUsed && password !== '***'))) {
+      // password가 '***'이면 기존 비밀번호 유지(수정 아님)
+      passwordToSave = await bcrypt.hash(password, 10);
+    }
+
     const updatedBox = await prisma.box.update({
       where: { boxNumber },
       data: {
         title,
         content,
-        password,
+        password: passwordToSave,
         isUsed
       }
     });
 
-    return NextResponse.json(updatedBox);
+    // 비밀번호 해시값은 클라이언트에 전달하지 않음
+    const { password: _, ...safeBox } = updatedBox;
+    return NextResponse.json(safeBox);
   } catch (error) {
     console.error('Error updating box:', error);
     return NextResponse.json({ error: 'Failed to update box' }, { status: 500 });
