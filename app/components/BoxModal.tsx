@@ -68,7 +68,7 @@ export default function BoxModal({ box, onUpdate, onDelete, onClose }: BoxModalP
   };
 
   // 클라이언트 전용 암호화/복호화 유틸
-  async function deriveKey(password: string, salt: Uint8Array) {
+  async function deriveKey(password: string, salt: ArrayBuffer) {
     const enc = new TextEncoder();
     const keyMaterial = await window.crypto.subtle.importKey(
       'raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveKey']
@@ -86,33 +86,8 @@ export default function BoxModal({ box, onUpdate, onDelete, onClose }: BoxModalP
       ['encrypt', 'decrypt']
     );
   }
-  async function encryptContent(password: string, plain: string) {
-    const enc = new TextEncoder();
-    const salt = window.crypto.getRandomValues(new Uint8Array(16));
-    const iv = window.crypto.getRandomValues(new Uint8Array(12));
-    const key = await deriveKey(password, salt);
-    const ciphertext = await window.crypto.subtle.encrypt(
-      { name: 'AES-GCM', iv },
-      key,
-      enc.encode(plain)
-    );
-    // 암호문, salt, iv를 base64로 합쳐서 저장
-    return `${btoa(String.fromCharCode(...salt))}:${btoa(String.fromCharCode(...iv))}:${btoa(String.fromCharCode(...new Uint8Array(ciphertext)))}`;
-  }
-  async function decryptContent(password: string, encrypted: string) {
-    const [saltB64, ivB64, ctB64] = encrypted.split(':');
-    if (!saltB64 || !ivB64 || !ctB64) return '';
-    const salt = Uint8Array.from(atob(saltB64), c => c.charCodeAt(0));
-    const iv = Uint8Array.from(atob(ivB64), c => c.charCodeAt(0));
-    const ct = Uint8Array.from(atob(ctB64), c => c.charCodeAt(0));
-    const key = await deriveKey(password, salt);
-    const plain = await window.crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv },
-      key,
-      ct
-    );
-    return new TextDecoder().decode(plain);
-  }
+
+  // encryptContent, decryptContent 함수는 실제로 사용하는 곳에서만 선언/사용하도록 위치 조정 또는 필요시만 선언
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
