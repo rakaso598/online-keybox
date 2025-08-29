@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import BoxGrid from './components/BoxGrid';
 import BoxModal from './components/BoxModal';
 import PasswordModal from './components/PasswordModal';
-import { decryptContent, encryptContent } from './components/BoxModal';
 
 export interface BoxData {
   id: string;
@@ -125,21 +124,19 @@ export default function Home() {
         alert('비밀번호 정보가 없습니다. 박스를 다시 열어주세요.');
         return;
       }
-      const encryptedContent = await encryptContent(boxPassword, updatedBox.content);
       const response = await fetch('/api/boxes', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           boxNumber: updatedBox.boxNumber,
           title: updatedBox.title,
-          content: encryptedContent,
+          content: updatedBox.content, // 내용은 BoxModal에서 처리
           password: '***', // 비밀번호 변경 아님 표시
           isUsed: updatedBox.isUsed
         })
       });
       if (response.ok) {
         const updated = await response.json();
-        updated.content = await decryptContent(boxPassword, updated.content);
         setBoxes(boxes.map(b => b.boxNumber === updatedBox.boxNumber ? updated : b));
         setSelectedBox(updated);
       }

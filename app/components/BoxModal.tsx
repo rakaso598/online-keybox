@@ -10,53 +10,6 @@ interface BoxModalProps {
   onClose: () => void;
 }
 
-// 암호화/복호화 유틸
-export async function deriveKey(password: string, salt: Uint8Array) {
-  const enc = new TextEncoder();
-  const keyMaterial = await window.crypto.subtle.importKey(
-    'raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveKey']
-  );
-  return window.crypto.subtle.deriveKey(
-    {
-      name: 'PBKDF2',
-      salt,
-      iterations: 100000,
-      hash: 'SHA-256',
-    },
-    keyMaterial,
-    { name: 'AES-GCM', length: 256 },
-    false,
-    ['encrypt', 'decrypt']
-  );
-}
-export async function encryptContent(password: string, plain: string) {
-  const enc = new TextEncoder();
-  const salt = window.crypto.getRandomValues(new Uint8Array(16));
-  const iv = window.crypto.getRandomValues(new Uint8Array(12));
-  const key = await deriveKey(password, salt);
-  const ciphertext = await window.crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv },
-    key,
-    enc.encode(plain)
-  );
-  // 암호문, salt, iv를 base64로 합쳐서 저장
-  return `${btoa(String.fromCharCode(...salt))}:${btoa(String.fromCharCode(...iv))}:${btoa(String.fromCharCode(...new Uint8Array(ciphertext)))}`;
-}
-export async function decryptContent(password: string, encrypted: string) {
-  const [saltB64, ivB64, ctB64] = encrypted.split(':');
-  if (!saltB64 || !ivB64 || !ctB64) return '';
-  const salt = Uint8Array.from(atob(saltB64), c => c.charCodeAt(0));
-  const iv = Uint8Array.from(atob(ivB64), c => c.charCodeAt(0));
-  const ct = Uint8Array.from(atob(ctB64), c => c.charCodeAt(0));
-  const key = await deriveKey(password, salt);
-  const plain = await window.crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv },
-    key,
-    ct
-  );
-  return new TextDecoder().decode(plain);
-}
-
 export default function BoxModal({ box, onUpdate, onDelete, onClose }: BoxModalProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(box.title);
@@ -113,6 +66,53 @@ export default function BoxModal({ box, onUpdate, onDelete, onClose }: BoxModalP
     setIsEditing(false);
     setHasUnsavedChanges(false);
   };
+
+  // 클라이언트 전용 암호화/복호화 유틸
+  async function deriveKey(password: string, salt: Uint8Array) {
+    const enc = new TextEncoder();
+    const keyMaterial = await window.crypto.subtle.importKey(
+      'raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveKey']
+    );
+    return window.crypto.subtle.deriveKey(
+      {
+        name: 'PBKDF2',
+        salt,
+        iterations: 100000,
+        hash: 'SHA-256',
+      },
+      keyMaterial,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['encrypt', 'decrypt']
+    );
+  }
+  async function encryptContent(password: string, plain: string) {
+    const enc = new TextEncoder();
+    const salt = window.crypto.getRandomValues(new Uint8Array(16));
+    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+    const key = await deriveKey(password, salt);
+    const ciphertext = await window.crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv },
+      key,
+      enc.encode(plain)
+    );
+    // 암호문, salt, iv를 base64로 합쳐서 저장
+    return `${btoa(String.fromCharCode(...salt))}:${btoa(String.fromCharCode(...iv))}:${btoa(String.fromCharCode(...new Uint8Array(ciphertext)))}`;
+  }
+  async function decryptContent(password: string, encrypted: string) {
+    const [saltB64, ivB64, ctB64] = encrypted.split(':');
+    if (!saltB64 || !ivB64 || !ctB64) return '';
+    const salt = Uint8Array.from(atob(saltB64), c => c.charCodeAt(0));
+    const iv = Uint8Array.from(atob(ivB64), c => c.charCodeAt(0));
+    const ct = Uint8Array.from(atob(ctB64), c => c.charCodeAt(0));
+    const key = await deriveKey(password, salt);
+    const plain = await window.crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv },
+      key,
+      ct
+    );
+    return new TextDecoder().decode(plain);
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
