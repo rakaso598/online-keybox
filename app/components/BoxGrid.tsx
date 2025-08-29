@@ -28,7 +28,7 @@ export default function BoxGrid({ boxes, onBoxClick }: BoxGridProps) {
             </div>
             <div className="text-center">
               <h3 className="font-semibold text-lg text-gray-800 mb-2">
-                박스 #{box.id}
+                박스 #{box.boxNumber}
               </h3>
               <div className={`
                 px-3 py-1 rounded-full text-sm font-medium

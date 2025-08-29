@@ -6,7 +6,7 @@ import { BoxData } from '../page';
 interface BoxModalProps {
   box: BoxData;
   onUpdate: (box: BoxData) => void;
-  onDelete: (boxId: number) => void;
+  onDelete: (boxNumber: number) => void;
   onClose: () => void;
 }
 
@@ -46,7 +46,7 @@ export default function BoxModal({ box, onUpdate, onDelete, onClose }: BoxModalP
 
   const handleDelete = () => {
     if (confirm('정말로 이 박스의 모든 내용을 삭제하시겠습니까?')) {
-      onDelete(box.id);
+      onDelete(box.boxNumber);
     }
   };
 
@@ -76,7 +76,7 @@ export default function BoxModal({ box, onUpdate, onDelete, onClose }: BoxModalP
             <span className="text-3xl">🔐</span>
             <div>
               <h2 className="text-xl font-bold text-gray-800">
-                박스 #{box.id}
+                박스 #{box.boxNumber}
               </h2>
               <p className="text-sm text-gray-500">
                 {isEditing ? '편집 모드' : '읽기 모드'}

@@ -6,11 +6,14 @@ import BoxModal from './components/BoxModal';
 import PasswordModal from './components/PasswordModal';
 
 export interface BoxData {
-  id: number;
+  id: string;
+  boxNumber: number;
   title: string;
   content: string;
   password: string;
   isUsed: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export default function Home() {
@@ -18,62 +21,74 @@ export default function Home() {
   const [selectedBox, setSelectedBox] = useState<BoxData | null>(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showBoxModal, setShowBoxModal] = useState(false);
-  const [passwordBoxId, setPasswordBoxId] = useState<number | null>(null);
+  const [passwordBoxNumber, setPasswordBoxNumber] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // 로컬 스토리지에서 데이터 로드
+  // 데이터베이스에서 박스 데이터 로드
   useEffect(() => {
-    const savedBoxes = localStorage.getItem('keystore-boxes');
-    if (savedBoxes) {
-      setBoxes(JSON.parse(savedBoxes));
-    } else {
-      // 초기 5개 박스 생성
-      const initialBoxes: BoxData[] = Array.from({ length: 5 }, (_, i) => ({
-        id: i + 1,
-        title: '',
-        content: '',
-        password: '',
-        isUsed: false,
-      }));
-      setBoxes(initialBoxes);
-      localStorage.setItem('keystore-boxes', JSON.stringify(initialBoxes));
-    }
+    fetchBoxes();
   }, []);
 
-  // 박스 데이터를 로컬 스토리지에 저장
-  const saveBoxes = (updatedBoxes: BoxData[]) => {
-    setBoxes(updatedBoxes);
-    localStorage.setItem('keystore-boxes', JSON.stringify(updatedBoxes));
+  const fetchBoxes = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/boxes');
+      if (response.ok) {
+        const boxesData = await response.json();
+        setBoxes(boxesData);
+      }
+    } catch (error) {
+      console.error('Failed to fetch boxes:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // 박스 클릭 핸들러
   const handleBoxClick = (box: BoxData) => {
     if (!box.isUsed) {
       // 사용 가능한 박스 - 새 암호 설정
-      setPasswordBoxId(box.id);
+      setPasswordBoxNumber(box.boxNumber);
       setShowPasswordModal(true);
     } else {
       // 사용 중인 박스 - 암호 입력 필요
-      setPasswordBoxId(box.id);
+      setPasswordBoxNumber(box.boxNumber);
       setShowPasswordModal(true);
     }
   };
 
   // 암호 설정/확인 후 박스 열기
-  const handlePasswordSubmit = (password: string) => {
-    if (passwordBoxId === null) return;
+  const handlePasswordSubmit = async (password: string) => {
+    if (passwordBoxNumber === null) return;
 
-    const box = boxes.find(b => b.id === passwordBoxId);
+    const box = boxes.find(b => b.boxNumber === passwordBoxNumber);
     if (!box) return;
 
     if (!box.isUsed) {
       // 새 박스 - 암호 설정
-      const updatedBoxes = boxes.map(b =>
-        b.id === passwordBoxId
-          ? { ...b, password, isUsed: true }
-          : b
-      );
-      saveBoxes(updatedBoxes);
-      setSelectedBox(updatedBoxes.find(b => b.id === passwordBoxId)!);
+      try {
+        const response = await fetch('/api/boxes', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            boxNumber: passwordBoxNumber,
+            title: box.title,
+            content: box.content,
+            password,
+            isUsed: true
+          })
+        });
+
+        if (response.ok) {
+          const updatedBox = await response.json();
+          setBoxes(boxes.map(b => b.boxNumber === passwordBoxNumber ? updatedBox : b));
+          setSelectedBox(updatedBox);
+        }
+      } catch (error) {
+        console.error('Failed to update box:', error);
+        alert('박스 설정에 실패했습니다.');
+        return;
+      }
     } else {
       // 기존 박스 - 암호 확인
       if (box.password === password) {
@@ -86,29 +101,64 @@ export default function Home() {
 
     setShowPasswordModal(false);
     setShowBoxModal(true);
-    setPasswordBoxId(null);
+    setPasswordBoxNumber(null);
   };
 
   // 박스 데이터 업데이트
-  const handleBoxUpdate = (updatedBox: BoxData) => {
-    const updatedBoxes = boxes.map(b =>
-      b.id === updatedBox.id ? updatedBox : b
-    );
-    saveBoxes(updatedBoxes);
-    setSelectedBox(updatedBox);
+  const handleBoxUpdate = async (updatedBox: BoxData) => {
+    try {
+      const response = await fetch('/api/boxes', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          boxNumber: updatedBox.boxNumber,
+          title: updatedBox.title,
+          content: updatedBox.content,
+          password: updatedBox.password,
+          isUsed: updatedBox.isUsed
+        })
+      });
+
+      if (response.ok) {
+        const updated = await response.json();
+        setBoxes(boxes.map(b => b.boxNumber === updatedBox.boxNumber ? updated : b));
+        setSelectedBox(updated);
+      }
+    } catch (error) {
+      console.error('Failed to update box:', error);
+      alert('박스 업데이트에 실패했습니다.');
+    }
   };
 
   // 박스 삭제
-  const handleBoxDelete = (boxId: number) => {
-    const updatedBoxes = boxes.map(b =>
-      b.id === boxId
-        ? { ...b, title: '', content: '', password: '', isUsed: false }
-        : b
-    );
-    saveBoxes(updatedBoxes);
-    setSelectedBox(null);
-    setShowBoxModal(false);
+  const handleBoxDelete = async (boxNumber: number) => {
+    try {
+      const response = await fetch(`/api/boxes?boxNumber=${boxNumber}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        const deletedBox = await response.json();
+        setBoxes(boxes.map(b => b.boxNumber === boxNumber ? deletedBox : b));
+        setSelectedBox(null);
+        setShowBoxModal(false);
+      }
+    } catch (error) {
+      console.error('Failed to delete box:', error);
+      alert('박스 삭제에 실패했습니다.');
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">🔐</div>
+          <div className="text-xl text-gray-600">키스토어를 불러오는 중...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
@@ -126,11 +176,11 @@ export default function Home() {
 
         {showPasswordModal && (
           <PasswordModal
-            isNewBox={passwordBoxId ? !boxes.find(b => b.id === passwordBoxId)?.isUsed : false}
+            isNewBox={passwordBoxNumber ? !boxes.find(b => b.boxNumber === passwordBoxNumber)?.isUsed : false}
             onSubmit={handlePasswordSubmit}
             onClose={() => {
               setShowPasswordModal(false);
-              setPasswordBoxId(null);
+              setPasswordBoxNumber(null);
             }}
           />
         )}
