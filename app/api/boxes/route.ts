@@ -65,7 +65,7 @@ export async function PUT(request: NextRequest) {
     });
 
     // 비밀번호 해시값은 클라이언트에 전달하지 않음
-    const { password: _, ...safeBox } = updatedBox;
+    const { password: _password, ...safeBox } = updatedBox;
     return NextResponse.json(safeBox);
   } catch (error) {
     console.error('Error updating box:', error);

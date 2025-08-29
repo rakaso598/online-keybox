@@ -86,34 +86,8 @@ export default function BoxModal({ box, onUpdate, onDelete, onClose }: BoxModalP
       ['encrypt', 'decrypt']
     );
   }
-  async function encryptContent(password: string, plain: string) {
-    const enc = new TextEncoder();
-    const salt = new Uint8Array(16);
-    window.crypto.getRandomValues(salt);
-    const iv = new Uint8Array(12);
-    window.crypto.getRandomValues(iv);
-    const key = await deriveKey(password, salt.buffer);
-    const ciphertext = await window.crypto.subtle.encrypt(
-      { name: 'AES-GCM', iv: iv.buffer },
-      key,
-      enc.encode(plain)
-    );
-    return `${btoa(String.fromCharCode(...salt))}:${btoa(String.fromCharCode(...iv))}:${btoa(String.fromCharCode(...new Uint8Array(ciphertext)))}`;
-  }
-  async function decryptContent(password: string, encrypted: string) {
-    const [saltB64, ivB64, ctB64] = encrypted.split(':');
-    if (!saltB64 || !ivB64 || !ctB64) return '';
-    const salt = Uint8Array.from(atob(saltB64), c => c.charCodeAt(0));
-    const iv = Uint8Array.from(atob(ivB64), c => c.charCodeAt(0));
-    const ct = Uint8Array.from(atob(ctB64), c => c.charCodeAt(0));
-    const key = await deriveKey(password, salt.buffer);
-    const plain = await window.crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv: iv.buffer },
-      key,
-      ct
-    );
-    return new TextDecoder().decode(plain);
-  }
+
+  // encryptContent, decryptContent 함수는 실제로 사용하는 곳에서만 선언/사용하도록 위치 조정 또는 필요시만 선언
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

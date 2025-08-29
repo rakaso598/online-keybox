@@ -140,8 +140,7 @@ export default function Home() {
         setBoxes(boxes.map(b => b.boxNumber === updatedBox.boxNumber ? updated : b));
         setSelectedBox(updated);
       }
-    } catch (error) {
-      console.error('Failed to update box:', error);
+    } catch {
       alert('박스 업데이트에 실패했습니다.');
     }
   };
