@@ -1,103 +1,205 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect } from 'react';
+import BoxGrid from './components/BoxGrid';
+import BoxModal from './components/BoxModal';
+import PasswordModal from './components/PasswordModal';
+
+export interface BoxData {
+  id: number;
+  title: string;
+  content: string;
+  password: string;
+  isUsed: boolean;
+}
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [boxes, setBoxes] = useState<BoxData[]>([]);
+  const [selectedBox, setSelectedBox] = useState<BoxData | null>(null);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showBoxModal, setShowBoxModal] = useState(false);
+  const [passwordBoxId, setPasswordBoxId] = useState<number | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+  // 로컬 스토리지에서 데이터 로드
+  useEffect(() => {
+    const savedBoxes = localStorage.getItem('keystore-boxes');
+    if (savedBoxes) {
+      setBoxes(JSON.parse(savedBoxes));
+    } else {
+      // 초기 5개 박스 생성
+      const initialBoxes: BoxData[] = Array.from({ length: 5 }, (_, i) => ({
+        id: i + 1,
+        title: '',
+        content: '',
+        password: '',
+        isUsed: false,
+      }));
+      setBoxes(initialBoxes);
+      localStorage.setItem('keystore-boxes', JSON.stringify(initialBoxes));
+    }
+  }, []);
+
+  // 박스 데이터를 로컬 스토리지에 저장
+  const saveBoxes = (updatedBoxes: BoxData[]) => {
+    setBoxes(updatedBoxes);
+    localStorage.setItem('keystore-boxes', JSON.stringify(updatedBoxes));
+  };
+
+  // 박스 클릭 핸들러
+  const handleBoxClick = (box: BoxData) => {
+    if (!box.isUsed) {
+      // 사용 가능한 박스 - 새 암호 설정
+      setPasswordBoxId(box.id);
+      setShowPasswordModal(true);
+    } else {
+      // 사용 중인 박스 - 암호 입력 필요
+      setPasswordBoxId(box.id);
+      setShowPasswordModal(true);
+    }
+  };
+
+  // 암호 설정/확인 후 박스 열기
+  const handlePasswordSubmit = (password: string) => {
+    if (passwordBoxId === null) return;
+
+    const box = boxes.find(b => b.id === passwordBoxId);
+    if (!box) return;
+
+    if (!box.isUsed) {
+      // 새 박스 - 암호 설정
+      const updatedBoxes = boxes.map(b =>
+        b.id === passwordBoxId
+          ? { ...b, password, isUsed: true }
+          : b
+      );
+      saveBoxes(updatedBoxes);
+      setSelectedBox(updatedBoxes.find(b => b.id === passwordBoxId)!);
+    } else {
+      // 기존 박스 - 암호 확인
+      if (box.password === password) {
+        setSelectedBox(box);
+      } else {
+        alert('암호가 틀렸습니다.');
+        return;
+      }
+    }
+
+    setShowPasswordModal(false);
+    setShowBoxModal(true);
+    setPasswordBoxId(null);
+  };
+
+  // 박스 데이터 업데이트
+  const handleBoxUpdate = (updatedBox: BoxData) => {
+    const updatedBoxes = boxes.map(b =>
+      b.id === updatedBox.id ? updatedBox : b
+    );
+    saveBoxes(updatedBoxes);
+    setSelectedBox(updatedBox);
+  };
+
+  // 박스 삭제
+  const handleBoxDelete = (boxId: number) => {
+    const updatedBoxes = boxes.map(b =>
+      b.id === boxId
+        ? { ...b, title: '', content: '', password: '', isUsed: false }
+        : b
+    );
+    saveBoxes(updatedBoxes);
+    setSelectedBox(null);
+    setShowBoxModal(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
+      <div className="container mx-auto px-4">
+        <header className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-800 mb-4">
+            🔐 온라인 키스토어
+          </h1>
+          <p className="text-gray-600">
+            안전한 개인 데이터 보관함 - 각 박스에 암호를 설정하여 중요한 정보를 보호하세요
+          </p>
+        </header>
+
+        <BoxGrid boxes={boxes} onBoxClick={handleBoxClick} />
+
+        {showPasswordModal && (
+          <PasswordModal
+            isNewBox={passwordBoxId ? !boxes.find(b => b.id === passwordBoxId)?.isUsed : false}
+            onSubmit={handlePasswordSubmit}
+            onClose={() => {
+              setShowPasswordModal(false);
+              setPasswordBoxId(null);
+            }}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
+        )}
+
+        {showBoxModal && selectedBox && (
+          <BoxModal
+            box={selectedBox}
+            onUpdate={handleBoxUpdate}
+            onDelete={handleBoxDelete}
+            onClose={() => {
+              setShowBoxModal(false);
+              setSelectedBox(null);
+            }}
           />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        )}
+      </div>
     </div>
+  );
+}
+          </a >
+        </div >
+      </main >
+  <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
+    <a
+      className="flex items-center gap-2 hover:underline hover:underline-offset-4"
+      href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <Image
+        aria-hidden
+        src="/file.svg"
+        alt="File icon"
+        width={16}
+        height={16}
+      />
+      Learn
+    </a>
+    <a
+      className="flex items-center gap-2 hover:underline hover:underline-offset-4"
+      href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <Image
+        aria-hidden
+        src="/window.svg"
+        alt="Window icon"
+        width={16}
+        height={16}
+      />
+      Examples
+    </a>
+    <a
+      className="flex items-center gap-2 hover:underline hover:underline-offset-4"
+      href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <Image
+        aria-hidden
+        src="/globe.svg"
+        alt="Globe icon"
+        width={16}
+        height={16}
+      />
+      Go to nextjs.org →
+    </a>
+  </footer>
+    </div >
   );
 }
