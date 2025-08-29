@@ -140,8 +140,7 @@ export default function Home() {
         setBoxes(boxes.map(b => b.boxNumber === updatedBox.boxNumber ? updated : b));
         setSelectedBox(updated);
       }
-    } catch (error) {
-      console.error('Failed to update box:', error);
+    } catch {
       alert('박스 업데이트에 실패했습니다.');
     }
   };
@@ -190,8 +189,8 @@ export default function Home() {
           <div className="mb-6">
             <div className="inline-block bg-yellow-100 border border-yellow-400 text-yellow-800 text-sm rounded px-4 py-3 font-semibold">
               ⚠️ 이 프로젝트는 학습/실습/데모용 예제입니다. 실제 비밀번호, 개인키, 민감정보를 저장하지 마세요.<br />
-              데이터는 평문으로 데이터베이스에 저장되며, 별도의 암호화/해싱/인증/인가가 적용되어 있지 않습니다.<br />
-              운영자(배포자)가 모든 데이터에 접근할 수 있습니다. 데이터 유출, 손실, 해킹 등에 대해 서비스 제공자는 책임지지 않습니다.
+              박스 비밀번호(암호)는 bcrypt 해시로 저장되며, 박스 내부의 내용(메모, 개인키 등)은 사용자의 비밀번호에서 파생된 키로 브라우저에서 암호화되어 저장됩니다.<br />
+              서버/운영자는 평문 데이터에 접근할 수 없으나, 암호화/복호화 키 분실 시 데이터 복구가 불가능합니다. 데이터 유출, 손실, 해킹 등에 대해 서비스 제공자는 책임지지 않습니다.
             </div>
           </div>
           <h1 className="text-4xl font-bold text-gray-800 mb-4">
